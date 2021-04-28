@@ -1,5 +1,5 @@
 1) Dans le répertoire où se trouve le code de l'Infinite JukeBox, placer une musique au format wave.
-2) Executer le code et renseigner les differents paramètre qui vont vous être demandés au fur et à mesure de l'exécution sur l'interpréteur Python
+2) Executer le code et renseigner les differents paramètres qui vont vous être demandés au fur et à mesure de l'exécution sur l'interpréteur Python
 3) Vous pouvez écouter le son généré au format wave nommé "InfiniteAudio.wav" dans ce même répertoire.
 
 
@@ -8,7 +8,7 @@ Remarques:
 Le tableau affiché à la fin correspond aux differents moments du fichier audio généré où un saut est effectué dans le morceau de base. 
 
 Pour ce qui est du seuil, il faut savoir qu'un seuil permettant d'éliminer environ la moitié des sauts possibles est de 
-13 mais cela varie en fonction des musiques et de autres paramètes bien évidement.
+13 mais cela varie en fonction des musiques et des autres paramèters bien évidement.
 
 Cette utilisation du programme utilise les FFT, la distance euclidienne et la comparaison où l'on compare les TFD de chaque portion entre elles et inclue le fade in / fade out.
 D'autres méthodes sont aussi disponnibles telles que le mix de deux musiques, les distances IS et KL et la comparaison des intervalles avec le contexte (comparaison 3 par 3).
