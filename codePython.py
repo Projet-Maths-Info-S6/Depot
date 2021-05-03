@@ -1,4 +1,3 @@
-
 import pandas as pd
 import librosa
 from librosa import display
@@ -283,6 +282,7 @@ def generate(file_path,newtimecodes,length,prob):
         print('Aucune similarité détecté avec ces paramètres')
         return False
     tab_duree=[]
+    tab_intervalle=[]
     duree=0
     newAudio = AudioSegment.from_wav(file_path)
     finalArray=[]
@@ -305,6 +305,7 @@ def generate(file_path,newtimecodes,length,prob):
         apply_fadeout(out, sr, 0.1)
         finalArray=np.concatenate((finalArray,out))     
         duree+=abs(fin-debut)
+        tab_intervalle.append((debut,fin))
         tab_duree.append(int(duree))
         debut=newtimecodes[j][1]
         
@@ -313,9 +314,21 @@ def generate(file_path,newtimecodes,length,prob):
     endOut = endArray.copy()                              
     apply_fadein(endOut, sr, 0.1)
     finalArray=np.concatenate((finalArray,endOut))
-    soundfile.write('testes.wav', endOut, samplerate=sr)
     soundfile.write('InfiniteAudio.wav', finalArray, samplerate=sr)
-    return tab_duree
+    return tab_duree,tab_intervalle
+
+
+def interface_durees(tab_intervalle,timecodes):
+    intervalle=[]
+    for e in tab_intervalle:
+        i=0
+        while e[0]!=timecodes[i]:
+            i+=1
+        while e[1]!=timecodes[i]:
+            intervalle.append((i,timecodes[i+1]-timecodes[i]))
+            i+=1
+    return intervalle
+        
 
 def generate_mix_2_musiques(file_path1,file_path2,jumps1,jumps2,length,prob):
     orig1, sr1 = librosa.load(file_path1)
@@ -335,9 +348,20 @@ def generate_mix_2_musiques(file_path1,file_path2,jumps1,jumps2,length,prob):
         print(debut)
         while fin<debut+0.001 or proba(prob)==False:
             if j==len(jumps1)-1:
+                inter=musique1[debut*1000:]
+                array = audiosegment_to_librosawav(inter)  
+                out = array.copy()
+                apply_fadein(out, sr2, 0.1)
+                apply_fadeout(out, sr2, 0.1)
+                finalArray=np.concatenate((finalArray,out))     
+                duree+=abs(fin-debut)
+                debut=0
                 j=0
-            j+=1
-            fin=jumps1[j][0]
+            else:
+                j+=1
+                fin=jumps1[j][0]
+
+
             
         intervalle = musique1[debut*1000:fin*1000]
         array = audiosegment_to_librosawav(intervalle)  
@@ -354,9 +378,18 @@ def generate_mix_2_musiques(file_path1,file_path2,jumps1,jumps2,length,prob):
             j=0
             while fin<debut+0.001 or proba(prob)==False:
                 if j==len(jumps2)-1:
+                    inter=musique2[debut*1000:]
+                    array = audiosegment_to_librosawav(inter)  
+                    out = array.copy()
+                    apply_fadein(out, sr2, 0.1)
+                    apply_fadeout(out, sr2, 0.1)
+                    finalArray=np.concatenate((finalArray,out))     
+                    duree+=abs(fin-debut)
+                    debut=0
                     j=0
-                j+=1
-                fin=jumps1[j][0]
+                else:
+                    j+=1
+                    fin=jumps2[j][0]
             intervalle2 = musique2[debut*1000:fin*1000]
             array = audiosegment_to_librosawav(intervalle2)  
             out = array.copy()
@@ -508,6 +541,38 @@ def matrice_tkinder (matrice):
 
     # Launch the GUI
     root.mainloop()
+    
+""" 
+    
+file_path="hiver.wav"
+
+
+file_path2="printemps.wav"    #Generer 2 musqiques
+
+fft1=get_all_fft(file_path,1,'tc1')
+fft2=get_all_fft(file_path2,1,'tc2')
+
+fft1,fft2 = normalize_2_musics(fft1,fft2)
+
+mat = matrice_dist_2musiques(fft1, fft2)
+np.save("mat2mus",mat)
+
+m=np.load("mat2mus.npy")
+mini1,mini2 = minimums_matrice_2_musiques(m)
+
+mini1=seuil(mini1, 5)
+mini2=seuil(mini2, 5)
+
+tc1=np.load("tc1.npy")
+tc2=np.load("tc2.npy")
+
+ntc1 = inter_to_tc_2(mini1,tc1,tc2)
+ntc2 = inter_to_tc_2(mini2,tc2,tc1)
+
+print(generate_mix_2_musiques(file_path, file_path2, ntc1, ntc2, 300, 0.5))
+"""
+
+
 nom=input('Nom du fichier audio (ne pas oubliter le .wav) = ')
 
 file_path="./"+nom
@@ -528,7 +593,7 @@ np.save('matrice_dist_10.txt', mat)
 tps3=time.time()
 mm=np.load('matrice_dist_10.txt.npy')
 mm=make_sym(mm)
-print("temps pour comparer tous les ffts :",tps3-tps2," secondes")
+#print("temps pour comparer tous les ffts :",tps3-tps2," secondes")
 print(np.shape(mm))
 tc=np.load('tc.npy')
 display(mm)
@@ -536,10 +601,12 @@ seuil=float(input("Seuil au delà duquel un saut n'est pas effectué = "))
 t=tri(seuil,mm)
 ntc=inter_to_tc(t,tc)
 duree=int(input("Durée du son généré (en secondes) = "))
-prob=float(input("Probabilité d'efftuer un saut = "))
-print(generate(file_path,ntc,duree,prob))
+prob=float(input("Probabilité d'effectuer un saut = "))
+tab_duree,tab_intervalle=generate(file_path,ntc,duree,prob)
+print(tab_duree)
+
+interface_duree=interface_duree(tab_intervalle,tc)
 tps4=time.time()
 print("temps pour générer le morceau de 5min :",tps4-tps3," secondes")
-
 
 
