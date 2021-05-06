@@ -17,7 +17,7 @@ import time
 import h5py
 import random
 import soundfile
-
+import tkinter as tk
 
 
 def get_fft(data):
@@ -541,9 +541,8 @@ def matrice_tkinder (matrice):
 
     # Launch the GUI
     root.mainloop()
-    
-""" 
-    
+
+"""     
 file_path="hiver.wav"
 
 
@@ -558,8 +557,11 @@ mat = matrice_dist_2musiques(fft1, fft2)
 np.save("mat2mus",mat)
 
 m=np.load("mat2mus.npy")
-mini1,mini2 = minimums_matrice_2_musiques(m)
 
+
+
+display(m)
+mini1,mini2 = minimums_matrice_2_musiques(m)
 mini1=seuil(mini1, 5)
 mini2=seuil(mini2, 5)
 
@@ -570,13 +572,12 @@ ntc1 = inter_to_tc_2(mini1,tc1,tc2)
 ntc2 = inter_to_tc_2(mini2,tc2,tc1)
 
 print(generate_mix_2_musiques(file_path, file_path2, ntc1, ntc2, 300, 0.5))
+
+
 """
-
-
 nom=input('Nom du fichier audio (ne pas oubliter le .wav) = ')
 
 file_path="./"+nom
-
 
 
 
@@ -605,8 +606,67 @@ prob=float(input("Probabilité d'effectuer un saut = "))
 tab_duree,tab_intervalle=generate(file_path,ntc,duree,prob)
 print(tab_duree)
 
-interface_duree=interface_duree(tab_intervalle,tc)
+interface_duree=interface_durees(tab_intervalle,tc)
+np.save('interDur',interface_duree)
 tps4=time.time()
 print("temps pour générer le morceau de 5min :",tps4-tps3," secondes")
 
+interface_durees=np.load('interDur.npy')
+print(interface_durees)
+tc=np.load('tc.npy')
+
+
+ 
+# fenêtre principale
+w = tk.Tk()
+ 
+# le tableau à afficher : [0, 0, 0, 0, 0]
+tableau = [0 for i in range(len(tc))]
+
+# les 2 couleurs à utiliser
+couleurs = {0: "white", 1: "blue"}
+ 
+# dimensions du canevas
+can_width = 1920
+can_height = 300
+ 
+# taille d'une "case"
+size = 1920//len(tc)
+
+ 
+# création canevas
+can = tk.Canvas(w, width=can_width, height=can_height)
+can.grid()
+ 
+def afficher(t):
+    for i in range(len(t)):
+        can.create_rectangle(i * size,
+                             300,
+                             i * size + size,
+                             size,
+                             fill = couleurs[tableau[i]])
+ 
+def modifierTableau(indice):
+    if tableau[indice]==0:        
+        tableau[indice]=1
+    else:
+        tableau[indice]=0
+    afficher(tableau)
+ 
+    
+ 
+def interface():  
+    for e in (interface_durees):
+        indice=int(e[0])
+        modifierTableau(indice) 
+        w.update()   
+        time.sleep(e[1])
+        modifierTableau(indice)
+        w.update()
+        
+        
+    w.mainloop()
+    
+   
+interface()
 
